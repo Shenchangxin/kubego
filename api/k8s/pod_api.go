@@ -6,10 +6,15 @@ import (
 	"github.com/gin-gonic/gin"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kubego/global"
+	"kubego/response"
 	"net/http"
 )
 
 type PodApi struct {
+}
+
+func (*PodApi) CreateOrUpdatePod(c *gin.Context) {
+	response.Success(c)
 }
 
 func (*PodApi) GetPodList(c *gin.Context) {
