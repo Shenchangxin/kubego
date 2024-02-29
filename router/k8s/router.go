@@ -11,7 +11,7 @@ type K8SRouter struct {
 func (*K8SRouter) InitK8SRouter(r *gin.Engine) {
 	group := r.Group("/k8s")
 	apiGroup := api.ApiGroupApp.K8SApiGroup
-	group.GET("/createOrUpdatePod", apiGroup.CreateOrUpdatePod)
+	group.POST("/createOrUpdatePod", apiGroup.CreateOrUpdatePod)
 	group.GET("/getPodList", apiGroup.GetPodList)
 	group.GET("/getNameSpace", apiGroup.GetNamespaceList)
 }

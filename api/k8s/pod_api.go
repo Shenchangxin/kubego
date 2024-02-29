@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kubego/global"
+	pod_req "kubego/model/pod/request"
 	"kubego/response"
 	"net/http"
 )
@@ -14,6 +15,24 @@ type PodApi struct {
 }
 
 func (*PodApi) CreateOrUpdatePod(c *gin.Context) {
+	var podReq pod_req.Pod
+
+	if err := c.ShouldBind(&podReq); err != nil {
+		response.FailWithMessage(c, "参数解析失败，detail："+err.Error())
+		return
+	}
+	//校验必填项
+	if err := podValidate.Validate(&podReq); err != nil {
+		response.FailWithMessage(c, "参数验证失败，detail："+err.Error())
+		return
+	}
+	ctx := context.TODO()
+	createdPod, err := global.KubeConfigSet.CoreV1().Pods("").Create(ctx, nil, metav1.CreateOptions{})
+	if err != nil {
+		errMsg := fmt.Sprintf("Pod[%s]创建失败，detail：%s", createdPod.Name, err.Error())
+		response.FailWithMessage(c, errMsg)
+		return
+	}
 	response.Success(c)
 }
 

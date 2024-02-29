@@ -136,13 +136,13 @@ type Container struct {
 
 type Pod struct {
 	//基础定义信息
-	Base string `json:"base"`
+	Base Base `json:"base"`
 	//卷
-	Volumes []string `json:"volumes"`
+	Volumes []Volumes `json:"volumes"`
 	//网络相关
 	NetWorking NetWorking `json:"netWorking"`
 	//container
-	Containers []string `json:"containers"`
+	Containers []Container `json:"containers"`
 	//init containers
-	InitContainers []string `json:"initContainers"`
+	InitContainers []Container `json:"initContainers"`
 }
