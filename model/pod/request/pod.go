@@ -98,7 +98,7 @@ type ContainerProbe struct {
 	//探针类型
 	Type      string         `json:"type"`
 	HttpGet   ProbeHttpGet   `json:"httpGet"`
-	Command   ProbeCommand   `json:"command"`
+	Exec      ProbeCommand   `json:"exec"`
 	TcpSocket ProbeTcpSocket `json:"tcpSocket"`
 	ProbeTime
 }
