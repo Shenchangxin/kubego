@@ -16,7 +16,7 @@ type Base struct {
 	RestartPolicy string `json:"restartPolicy"`
 }
 
-type Volumes struct {
+type Volume struct {
 	Name string `json:"name"`
 	Type string `json:"type"`
 }
@@ -103,6 +103,12 @@ type ContainerProbe struct {
 	ProbeTime
 }
 
+type ContainerPort struct {
+	Name          string `json:"name"`
+	ContainerPort int32  `json:"containerPort"`
+	HostPort      int32  `json:"hostPort"`
+}
+
 type Container struct {
 	//容器名称
 	Name string `json:"name"`
@@ -112,6 +118,8 @@ type Container struct {
 	ImagePullPolicy string `json:"imagePullPolicy"`
 	//是否开启伪终端
 	Tty bool `json:"tty"`
+	//端口映射
+	Ports []ContainerPort `json:"ports"`
 	//工作目录
 	WorkingDir string `json:"workingDir"`
 	//执行命令
@@ -138,7 +146,7 @@ type Pod struct {
 	//基础定义信息
 	Base Base `json:"base"`
 	//卷
-	Volumes []Volumes `json:"volumes"`
+	Volumes []Volume `json:"volumes"`
 	//网络相关
 	NetWorking NetWorking `json:"netWorking"`
 	//container
