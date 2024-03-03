@@ -12,6 +12,6 @@ func (*K8SRouter) InitK8SRouter(r *gin.Engine) {
 	group := r.Group("/k8s")
 	apiGroup := api.ApiGroupApp.K8SApiGroup
 	group.POST("/createOrUpdatePod", apiGroup.CreateOrUpdatePod)
-	group.GET("/getPodList", apiGroup.GetPodList)
+	group.GET("/getPodListOrDetail", apiGroup.GetPodListOrDetail)
 	group.GET("/getNameSpace", apiGroup.GetNamespaceList)
 }

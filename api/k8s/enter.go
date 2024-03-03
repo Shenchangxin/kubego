@@ -1,7 +1,7 @@
 package k8s
 
 import (
-	"kubego/convert"
+	"kubego/service"
 	"kubego/validate"
 )
 
@@ -11,4 +11,4 @@ type ApiGroup struct {
 }
 
 var podValidate = validate.ValidateGroupApp.PodValidate
-var podConvert = convert.ConvertGroupApp.PodConvert
+var podService = service.ServiceGroupApp.PodServiceGroup.PodService
