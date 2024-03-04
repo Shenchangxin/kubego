@@ -21,6 +21,58 @@ func (*K8s2ReqConvert) PodK8s2Req(podK8s corev1.Pod) pod_req.Pod {
 	}
 }
 
+func getReqContainers(containersK8s []corev1.Container) []pod_req.Container {
+	podReqContainers := make([]pod_req.Container, 0)
+	for _, item := range containersK8s {
+		reqContainer := getReqContainer(item)
+		podReqContainers = append(podReqContainers, reqContainer)
+	}
+	return podReqContainers
+}
+func getReqContainer(container corev1.Container) pod_req.Container {
+	return pod_req.Container{
+		Name:            container.Name,
+		Image:           container.Image,
+		ImagePullPolicy: string(container.ImagePullPolicy),
+		Tty:             container.TTY,
+		WorkingDir:      container.WorkingDir,
+		Command:         container.Command,
+		Args:            container.Args,
+		Ports:           getReqContainerPorts(container.Ports),
+
+		Envs:           getReqContainerEnvs(container.Env),
+		Privileged:     "",
+		Resources:      nil,
+		VolumeMounts:   nil,
+		StartupProbe:   nil,
+		LivenessProbe:  nil,
+		ReadinessProbe: nil,
+	}
+}
+
+func getReqContainerEnvs(envsK8s []corev1.EnvVar) []pod_req.ListMapItem {
+	envsReq := make([]pod_req.ListMapItem, 0)
+	for _, item := range envsK8s {
+		envsReq = append(envsReq, pod_req.ListMapItem{
+			Key:   item.Name,
+			Value: item.Value,
+		})
+	}
+	return envsReq
+}
+
+func getReqContainerPorts(portsK8s []corev1.ContainerPort) []pod_req.ContainerPort {
+	portsReq := make([]pod_req.ContainerPort, 0)
+	for _, item := range portsK8s {
+		portsReq = append(portsReq, pod_req.ContainerPort{
+			Name:          item.Name,
+			HostPort:      item.HostPort,
+			ContainerPort: item.ContainerPort,
+		})
+	}
+	return portsReq
+}
+
 func getReqVolumes(volumes []corev1.Volume) []pod_req.Volume {
 	volumesReq := make([]pod_req.Volume, 0)
 	for _, volume := range volumes {
