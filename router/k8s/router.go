@@ -14,4 +14,5 @@ func (*K8SRouter) InitK8SRouter(r *gin.Engine) {
 	group.POST("/createOrUpdatePod", apiGroup.CreateOrUpdatePod)
 	group.GET("/getPodListOrDetail", apiGroup.GetPodListOrDetail)
 	group.GET("/getNameSpace", apiGroup.GetNamespaceList)
+	group.GET("/deletePod", apiGroup.DeletePod)
 }

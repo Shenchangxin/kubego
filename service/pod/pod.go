@@ -10,10 +10,34 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"kubego/global"
 	pod_req "kubego/model/pod/request"
+	pod_res "kubego/model/pod/response"
 	"strings"
 )
 
 type PodService struct {
+}
+
+func (*PodService) GetPodList(namespace string, keyword string, nodeName string) (err error, _ []pod_res.PodListItem) {
+	ctx := context.TODO()
+	list, err := global.KubeConfigSet.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return
+	}
+	podList := make([]pod_res.PodListItem, 0)
+	for _, item := range list.Items {
+		if nodeName != "" && item.Spec.NodeName != nodeName {
+			continue
+		}
+		if strings.Contains(item.Name, keyword) {
+			podItem := podConvert.PodK8s2ItemRes(item)
+			podList = append(podList, podItem)
+		}
+	}
+	return err, podList
+}
+
+func (*PodService) DeletePod(namespace string, name string) error {
+	return global.KubeConfigSet.CoreV1().Pods(namespace).Delete(context.TODO(), name, metav1.DeleteOptions{})
 }
 
 func (*PodService) GetPodDetail(namespace string, name string) (podReq pod_req.Pod, err error) {

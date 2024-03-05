@@ -34,6 +34,17 @@ func PatchPod(patchData map[string]interface{}, k8sPod *corev1.Pod, ctx context.
 	return err
 }
 
+func (*PodApi) DeletePod(c *gin.Context) {
+	namespace := c.Param("namespace")
+	name := c.Param("name")
+	err := podService.DeletePod(namespace, name)
+	if err != nil {
+		response.FailWithMessage(c, "删除Pod失败，detail："+err.Error())
+	} else {
+		response.Success(c)
+	}
+}
+
 func (*PodApi) CreateOrUpdatePod(c *gin.Context) {
 	var podReq pod_req.Pod
 
@@ -56,6 +67,7 @@ func (*PodApi) CreateOrUpdatePod(c *gin.Context) {
 func (*PodApi) GetPodListOrDetail(c *gin.Context) {
 	namespace := c.Param("namespace")
 	name := c.Query("name")
+	keyword := c.Query("keyword")
 	if name != "" {
 		detail, err := podService.GetPodDetail(namespace, name)
 		if err != nil {
@@ -64,6 +76,11 @@ func (*PodApi) GetPodListOrDetail(c *gin.Context) {
 		}
 		response.SuccessWithDetailed(c, "获取Pod详情成功", detail)
 	} else {
-		response.SuccessWithMessage(c, "查看Pod列表")
+		err, items := podService.GetPodList(namespace, keyword, c.Query("nodeName"))
+		if err != nil {
+			response.FailWithMessage(c, err.Error())
+			return
+		}
+		response.SuccessWithDetailed(c, "获取Pod列表成功", items)
 	}
 }

@@ -1,8 +1,10 @@
 package pod
 
 import (
+	"fmt"
 	corev1 "k8s.io/api/core/v1"
 	pod_req "kubego/model/pod/request"
+	pod_res "kubego/model/pod/response"
 	"strings"
 )
 
@@ -16,8 +18,8 @@ func (*K8s2ReqConvert) PodK8s2Req(podK8s corev1.Pod) pod_req.Pod {
 		Base:           getReqBase(podK8s),
 		NetWorking:     getReqNetWorking(podK8s),
 		Volumes:        getReqVolumes(podK8s.Spec.Volumes),
-		Containers:     nil,
-		InitContainers: nil,
+		Containers:     getReqContainers(podK8s.Spec.Containers),
+		InitContainers: getReqContainers(podK8s.Spec.InitContainers),
 	}
 }
 
@@ -95,6 +97,33 @@ func getReqContainerProbe(probeK8s *corev1.Probe) pod_req.ContainerProbe {
 	}
 	return containerProbe
 }
+func (*K8s2ReqConvert) PodK8s2ItemRes(pod corev1.Pod) pod_res.PodListItem {
+
+	var totalC, readyC, restartC int32
+	for _, containerStatus := range pod.Status.ContainerStatuses {
+		if containerStatus.Ready {
+			readyC++
+		}
+		restartC += containerStatus.RestartCount
+		totalC++
+	}
+	var podStatus string
+	if pod.Status.Phase != "Running" {
+		podStatus = "Error"
+	} else {
+		podStatus = "Running"
+	}
+	return pod_res.PodListItem{
+		Name:     pod.Name,
+		Ready:    fmt.Sprintf("%d/%d", readyC, totalC),
+		Status:   podStatus,
+		Restarts: restartC,
+		Age:      pod.CreationTimestamp.Unix(),
+		IP:       pod.Status.PodIP,
+		Node:     pod.Spec.NodeName,
+	}
+}
+
 func getReqContainerVolumeMounts(volumeMountsK8s []corev1.VolumeMount) []pod_req.VolumeMount {
 	volumesReq := make([]pod_req.VolumeMount, 0)
 	for _, item := range volumeMountsK8s {
