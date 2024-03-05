@@ -41,15 +41,98 @@ func getReqContainer(container corev1.Container) pod_req.Container {
 		Ports:           getReqContainerPorts(container.Ports),
 
 		Envs:           getReqContainerEnvs(container.Env),
-		Privileged:     "",
-		Resources:      nil,
-		VolumeMounts:   nil,
-		StartupProbe:   nil,
-		LivenessProbe:  nil,
-		ReadinessProbe: nil,
+		Privileged:     getReqContainerPrivileged(container.SecurityContext),
+		Resources:      getReqContainerResources(container.Resources),
+		VolumeMounts:   getReqContainerVolumeMounts(container.VolumeMounts),
+		StartupProbe:   getReqContainerProbe(container.StartupProbe),
+		LivenessProbe:  getReqContainerProbe(container.LivenessProbe),
+		ReadinessProbe: getReqContainerProbe(container.ReadinessProbe),
 	}
 }
+func getReqContainerProbe(probeK8s *corev1.Probe) pod_req.ContainerProbe {
+	containerProbe := pod_req.ContainerProbe{
+		Enable: false,
+	}
+	//先判断是否探针为空
+	if probeK8s != nil {
+		containerProbe.Enable = true
+		//再判断 探针具体是什么类型
+		if probeK8s.Exec != nil {
+			containerProbe.Type = probe_exec
+			containerProbe.Exec.Command = probeK8s.Exec.Command
+		} else if probeK8s.HTTPGet != nil {
+			containerProbe.Type = probe_http
+			httpGet := probeK8s.HTTPGet
+			headersReq := make([]pod_req.ListMapItem, 0)
+			for _, headerK8s := range httpGet.HTTPHeaders {
+				headersReq = append(headersReq, pod_req.ListMapItem{
+					Key:   headerK8s.Name,
+					Value: headerK8s.Value,
+				})
+			}
+			containerProbe.HttpGet = pod_req.ProbeHttpGet{
+				Host:        httpGet.Host,
+				Port:        httpGet.Port.IntVal,
+				Scheme:      string(httpGet.Scheme),
+				Path:        httpGet.Path,
+				HttpHeaders: headersReq,
+			}
+		} else if probeK8s.TCPSocket != nil {
+			containerProbe.Type = probe_tcp
+			containerProbe.TcpSocket = pod_req.ProbeTcpSocket{
+				Host: probeK8s.TCPSocket.Host,
+				Port: probeK8s.TCPSocket.Port.IntVal,
+			}
+		} else {
+			containerProbe.Type = probe_http
+			return containerProbe
+		}
+		containerProbe.InitialDelaySeconds = probeK8s.InitialDelaySeconds
+		containerProbe.PeriodSeconds = probeK8s.PeriodSeconds
+		containerProbe.TimeoutSeconds = probeK8s.TimeoutSeconds
+		containerProbe.SuccessThreshold = probeK8s.SuccessThreshold
+		containerProbe.FailureThreshold = probeK8s.FailureThreshold
+	}
+	return containerProbe
+}
+func getReqContainerVolumeMounts(volumeMountsK8s []corev1.VolumeMount) []pod_req.VolumeMount {
+	volumesReq := make([]pod_req.VolumeMount, 0)
+	for _, item := range volumeMountsK8s {
 
+		volumesReq = append(volumesReq, pod_req.VolumeMount{
+			MountName: item.Name,
+			MountPath: item.MountPath,
+			ReadOnly:  item.ReadOnly,
+		})
+	}
+	return volumesReq
+}
+func getReqContainerResources(requirements corev1.ResourceRequirements) pod_req.Resources {
+	reqResources := pod_req.Resources{
+		Enable: false,
+	}
+	requests := requirements.Requests
+	limits := requirements.Limits
+	if requests != nil {
+		reqResources.Enable = true
+		reqResources.CpuRequest = int32(requests.Cpu().MilliValue()) // m
+		//MiB
+		reqResources.MemRequest = int32(requests.Memory().Value() / (1024 * 1024)) //Bytes
+	}
+	if limits != nil {
+		reqResources.Enable = true
+		reqResources.CpuLimit = int32(limits.Cpu().MilliValue())
+		reqResources.MemLimit = int32(limits.Memory().Value() / (1024 * 1024))
+	}
+	return reqResources
+}
+
+func getReqContainerPrivileged(ctx *corev1.SecurityContext) (privileged bool) {
+	if ctx != nil {
+		privileged = *ctx.Privileged
+	}
+	return
+}
 func getReqContainerEnvs(envsK8s []corev1.EnvVar) []pod_req.ListMapItem {
 	envsReq := make([]pod_req.ListMapItem, 0)
 	for _, item := range envsK8s {
